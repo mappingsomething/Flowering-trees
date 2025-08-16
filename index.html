@@ -3,25 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tree Map from CSV</title>
-
-  <!-- Leaflet CSS -->
+  <title>Trees Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
   <style>
     html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
     #map { height: 100%; width: 100%; }
-    .leaflet-popup-content { width: 250px !important; }
   </style>
 </head>
-
 <body>
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- PapaParse for CSV parsing -->
-  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
 
   <script>
     const map = L.map('map').setView([12.9716, 77.5946], 13);
@@ -32,55 +25,65 @@
       maxZoom: 19
     }).addTo(map);
 
-    // Fixed mapping of TreeName -> colour
-    const treeColors = {
-      "Markhamia Lutea (Benth.) K.Schum": "#e6194b",
-      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "#3cb44b",
-      "Samanea Saman (Jacq.) Merr.": "#ffe119",
-      "Spathodea Campanulata P. Beauv": "#4363d8",
-      "Thespesia Populnea": "#f58231",
-      "Delonix Regia (Bojer Ex Hook.) Raf.": "#911eb4",
-      "Michelia Longifolia Blume": "#46f0f0",
-      "Plumeria Rubra L. Forma Tricolor": "#f032e6",
-      "Couroupita Guianensis Abul.": "#bcf60c",
-      "Bauhinia Purpurata (Vieill.)": "#fabebe"
+    // Define tree colors
+    const treeColors = { 
+      "Markhamia Lutea (Benth.) K.Schum": "#ff0000",   // red
+      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "#00ff00",   // green
+      "Samanea Saman (Jacq.) Merr.": "#0000ff",        // blue
+      "Spathodea Campanulata P. Beauv": "#ffa500",     // orange
+      "Thespesia Populnea": "#800080",                 // purple
+      "Delonix Regia (Bojer Ex Hook.) Raf.": "#008080", // teal
+      "Michelia Longifolia Blume": "#ff69b4",          // pink
+      "Plumeria Rubra L. Forma Tricolor": "#a52a2a",   // brown
+      "Couroupita Guianensis Abul.": "#ffff00",        // yellow
+      "Bauhinia Purpurata (Vieill.)": "#000000"        // black
     };
 
-    // Function to make a small coloured circle marker
-    function createCustomMarker(color) {
-      return L.divIcon({
-        className: '',
-        html: `<div style="background:${color}; width:12px; height:12px; 
-                         border-radius:50%; border:1px solid #fff;"></div>`,
-        iconSize: [12, 12]
+    // CSV files list (replace URLs with where you host them)
+    const csvFiles = {
+      "Markhamia Lutea (Benth.) K.Schum": "Markhamia_Lutea.csv",
+      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "Peltophorum_Pterocarpum.csv",
+      "Samanea Saman (Jacq.) Merr.": "Samanea_Saman.csv",
+      "Spathodea Campanulata P. Beauv": "Spathodea_Campanulata.csv",
+      "Thespesia Populnea": "Thespesia_Populnea.csv",
+      "Delonix Regia (Bojer Ex Hook.) Raf.": "Delonix_Regia.csv",
+      "Michelia Longifolia Blume": "Michelia_Longifolia.csv",
+      "Plumeria Rubra L. Forma Tricolor": "Plumeria_Rubra.csv",
+      "Couroupita Guianensis Abul.": "Couroupita_Guianensis.csv",
+      "Bauhinia Purpurata (Vieill.)": "Bauhinia_Purpurata.csv"
+    };
+
+    // Function to load each CSV and plot markers
+    function loadCSV(treeName, fileUrl) {
+      Papa.parse(fileUrl, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          results.data.forEach(row => {
+            const lat = parseFloat(row.ycoord);
+            const lng = parseFloat(row.xcoord);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              L.circleMarker([lat, lng], {
+                radius: 5,
+                color: treeColors[treeName],
+                fillColor: treeColors[treeName],
+                fillOpacity: 0.8
+              }).addTo(map).bindPopup(`<b>${treeName}</b>`);
+            }
+          });
+        }
       });
     }
 
-    // Fetch CSV (make sure your CSV has columns: TreeName, lat, lng)
-    Papa.parse("https://mappingsomething.github.io/Gulmohar/trees.csv", {
-      download: true,
-      header: true,
-      complete: function(results) {
-        const data = results.data;
+    // Loop through files
+    Object.entries(csvFiles).forEach(([treeName, fileUrl]) => {
+      loadCSV(treeName, fileUrl);
+    });
 
-        data.forEach(row => {
-          if (row.TreeName && row.lat && row.lng) {
-            const color = treeColors[row.TreeName] || "#666"; // fallback gray if not in list
+  </script>
+</body>
+</html>
 
-            const marker = L.marker([parseFloat(row.lat), parseFloat(row.lng)], {
-              icon: createCustomMarker(color)
-            });
-
-            marker.bindPopup(`
-              <b>Tree:</b> ${row.TreeName}<br>
-              <b>Lat:</b> ${row.lat}<br>
-              <b>Lng:</b> ${row.lng}
-            `);
-
-            marker.addTo(map);
-          }
-        });
-      }
     });
   </script>
 </body>
