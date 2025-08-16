@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tree Map from CSV</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+    #map { height: 100%; width: 100%; }
+    .leaflet-popup-content { width: 250px !important; }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- PapaParse for CSV parsing -->
+  <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <script>
+    const map = L.map('map').setView([12.9716, 77.5946], 13);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a> | &copy; OpenStreetMap contributors',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Fixed mapping of TreeName -> colour
+    const treeColors = {
+      "Markhamia Lutea (Benth.) K.Schum": "#e6194b",
+      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "#3cb44b",
+      "Samanea Saman (Jacq.) Merr.": "#ffe119",
+      "Spathodea Campanulata P. Beauv": "#4363d8",
+      "Thespesia Populnea": "#f58231",
+      "Delonix Regia (Bojer Ex Hook.) Raf.": "#911eb4",
+      "Michelia Longifolia Blume": "#46f0f0",
+      "Plumeria Rubra L. Forma Tricolor": "#f032e6",
+      "Couroupita Guianensis Abul.": "#bcf60c",
+      "Bauhinia Purpurata (Vieill.)": "#fabebe"
+    };
+
+    // Function to make a small coloured circle marker
+    function createCustomMarker(color) {
+      return L.divIcon({
+        className: '',
+        html: `<div style="background:${color}; width:12px; height:12px; 
+                         border-radius:50%; border:1px solid #fff;"></div>`,
+        iconSize: [12, 12]
+      });
+    }
+
+    // Fetch CSV (make sure your CSV has columns: TreeName, lat, lng)
+    Papa.parse("https://mappingsomething.github.io/Gulmohar/trees.csv", {
+      download: true,
+      header: true,
+      complete: function(results) {
+        const data = results.data;
+
+        data.forEach(row => {
+          if (row.TreeName && row.lat && row.lng) {
+            const color = treeColors[row.TreeName] || "#666"; // fallback gray if not in list
+
+            const marker = L.marker([parseFloat(row.lat), parseFloat(row.lng)], {
+              icon: createCustomMarker(color)
+            });
+
+            marker.bindPopup(`
+              <b>Tree:</b> ${row.TreeName}<br>
+              <b>Lat:</b> ${row.lat}<br>
+              <b>Lng:</b> ${row.lng}
+            `);
+
+            marker.addTo(map);
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
