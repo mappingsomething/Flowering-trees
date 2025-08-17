@@ -25,38 +25,24 @@
       maxZoom: 19
     }).addTo(map);
 
-    // Tree colors
-    const treeColors = { 
-      "Markhamia Lutea (Benth.) K.Schum": "#ff0000",
-      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "#00ff00",
-      "Samanea Saman (Jacq.) Merr.": "#0000ff",
-      "Spathodea Campanulata P. Beauv": "#ffa500",
-      "Thespesia Populnea": "#800080",
-      "Delonix Regia (Bojer Ex Hook.) Raf.": "#008080",
-      "Michelia Longifolia Blume": "#ff69b4",
-      "Plumeria Rubra L. Forma Tricolor": "#a52a2a",
-      "Couroupita Guianensis Abul.": "#ffff00",
-      "Bauhinia Purpurata (Vieill.)": "#000000"
+    // 🌸 Tree info (Scientific → {Common, Color})
+    const treeInfo = {
+      "Markhamia Lutea (Benth.) K.Schum": { common: "Nile Tulip Tree", color: "#FFDC2E" },
+      "Peltophorum Pterocarpum (Dc.) Back.": { common: "Copper Pod / Yellow Flame Tree", color: "#FFD500" },
+      "Samanea Saman (Jacq.) Merr.": { common: "Rain Tree", color: "#0F5132" },
+      "Spathodea Campanulata P. Beauv": { common: "African Tulip Tree", color: "#F6412D" },
+      "Thespesia Populnea": { common: "Portia Tree / Poovarasu", color: "#FFF9E2" },
+      "Delonix Regia (Bojer Ex Hook.) Raf.": { common: "Gulmohar / Mayflower Tree", color: "#AC0214" },
+      "Michelia Longifolia Blume": { common: "Long-leaved Champak", color: "#FFDD1" },
+      "Plumeria Rubra L. Forma Tricolor": { common: "Frangipani / Champa", color: "#F78284" },
+      "Couroupita Guianensis Abul.": { common: "Cannonball Tree", color: "#FFD361" },
+      "Bauhinia Purpurata (Vieill.)": { common: "Purple Orchid Tree", color: "#B965E1" }
     };
 
-    // Common names for popup
-    const commonNames = {
-      "Markhamia Lutea (Benth.) K.Schum": "Markhamia lutea – Nile Tulip Tree / Golden Shower Tree (African origin)",
-      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "Peltophorum pterocarpum – Copperpod / Yellow Flame Tree",
-      "Samanea Saman (Jacq.) Merr.": "Rain Tree",
-      "Spathodea Campanulata P. Beauv": "Spathodea campanulata – African Tulip Tree",
-      "Thespesia Populnea": "Thespesia populnea – Portia Tree / Indian Tulip Tree",
-      "Delonix Regia (Bojer Ex Hook.) Raf.": "Delonix regia – Gulmohar / Flame Tree / Royal Poinciana",
-      "Michelia Longifolia Blume": "Michelia longifolia – Long-leaved Champak (Magnolia group)",
-      "Plumeria Rubra L. Forma Tricolor": "Plumeria rubra forma tricolor – Tricolor / Rainbow / Mardi Gras Plumeria",
-      "Couroupita Guianensis Abul.": "Couroupita guianensis – Cannonball Tree",
-      "Bauhinia Purpurata (Vieill.)": "Bauhinia purpurata – Purple Orchid Tree"
-    };
-
-    // CSV files list
+    // 📂 CSV file mapping
     const csvFiles = {
       "Markhamia Lutea (Benth.) K.Schum": "Markhamia_Lutea_Benth_KSchum.csv",
-      "Peltophorum Pterocarpum (Dc.) Back. Ex K. Heyne": "Peltophorum_Pterocarpum_Dc_Back_Ex_K_Heyne.csv",
+      "Peltophorum Pterocarpum (Dc.) Back.": "Peltophorum_Pterocarpum_Dc_Back.csv",
       "Samanea Saman (Jacq.) Merr.": "Samanea_Saman_Jacq_Merr.csv",
       "Spathodea Campanulata P. Beauv": "Spathodea_Campanulata_P_Beauv.csv",
       "Thespesia Populnea": "Thespesia_Populnea.csv",
@@ -67,14 +53,11 @@
       "Bauhinia Purpurata (Vieill.)": "Bauhinia_Purpurata_Vieill.csv"
     };
 
-    // Store layers here
+    // 🌿 Layer groups for toggling
     const layers = {};
 
-    // Load each CSV and create a layer
-    function loadCSV(treeName, fileUrl) {
+    function loadCSV(sciName, fileUrl) {
       const layerGroup = L.layerGroup();
-      layers[treeName] = layerGroup; // Save for layer control
-
       Papa.parse(fileUrl, {
         download: true,
         header: true,
@@ -84,28 +67,28 @@
             const lng = parseFloat(row.xcoord);
             if (!isNaN(lat) && !isNaN(lng)) {
               L.circleMarker([lat, lng], {
-                radius: 5,
-                color: treeColors[treeName],
-                fillColor: treeColors[treeName],
-                fillOpacity: 0.8
-              }).bindPopup(`<b>${commonNames[treeName]}</b>`).addTo(layerGroup);
+                radius: 6,
+                color: "#FFFFAA",   // light yellow border
+                weight: 1,
+                fillColor: treeInfo[sciName].color,
+                fillOpacity: 0.7
+              })
+              .bindPopup(`<b>${treeInfo[sciName].common}</b><br><i>${sciName}</i>`)
+              .addTo(layerGroup);
             }
           });
         }
       });
-
-      // Add the group to the map by default
-      layerGroup.addTo(map);
+      layers[treeInfo[sciName].common] = layerGroup;
     }
 
-    // Load all trees
-    Object.entries(csvFiles).forEach(([treeName, fileUrl]) => {
-      loadCSV(treeName, fileUrl);
+    // Load all CSVs
+    Object.entries(csvFiles).forEach(([sciName, fileUrl]) => {
+      loadCSV(sciName, fileUrl);
     });
 
-    // Add layer control
-    L.control.layers(null, layers, { collapsed: false, position: 'topright' }).addTo(map);
-
+    // Add control (toggle on/off by common name)
+    L.control.layers(null, layers, { collapsed: false }).addTo(map);
   </script>
 </body>
 </html>
